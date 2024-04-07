@@ -11,7 +11,7 @@
 
 
 CREATE TABLE Users (
-    user_id         INT NOT NULL AUTO_INCREMENT,
+    user_id         INT NOT NULL,
     user_email      VARCHAR(50) NOT NULL UNIQUE,
     user_name       VARCHAR(20) NOT NULL,
     password        VARCHAR(100) NOT NULL,
