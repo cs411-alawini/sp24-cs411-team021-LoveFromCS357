@@ -31,7 +31,7 @@ JOIN
 WHERE 
     Recipes.recipe_id IN (SELECT recipe_id FROM UserRatesRecipe)
 GROUP BY 
-    Users.user_name, Recipes.recipe_name
+    Users.user_name, Recipes.recipe_name, UserRatesRecipe.rating
 HAVING 
     COUNT(DISTINCT Recipes.recipe_id) > 1;
 
