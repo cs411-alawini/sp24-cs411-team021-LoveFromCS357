@@ -20,7 +20,7 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Recipes (
-    recipe_id       INT NOT NULL AUTO_INCREMENT,
+    recipe_id       INT NOT NULL,
     recipe_name     VARCHAR(255) NOT NULL,
     recipe_type     VARCHAR(10),
     user_email      VARCHAR(50) NOT NULL,
