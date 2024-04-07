@@ -17,23 +17,22 @@ LIMIT 5;
 -- Find Users Who Like and Rate the Same Recipe
 --JOIN, SET(IN)
 SELECT 
-    Users.user_name,
-    Recipes.recipe_name,
-    UserRatesRecipe.rating
+    Ingredients.ingredient_name,
+    COUNT(*) AS popularity
 FROM 
-    Users
+    Ingredients
 JOIN 
-    UserLikeRecipe ON Users.user_id = UserLikeRecipe.user_id
+    RecipeIncludesIngredients ON Ingredients.ingredient_id = RecipeIncludesIngredients.ingredient_id
 JOIN 
-    UserRatesRecipe ON Users.user_id = UserRatesRecipe.user_id
+    Recipes ON RecipeIncludesIngredients.recipe_id = Recipes.recipe_id
 JOIN 
-    Recipes ON UserLikeRecipe.recipe_id = Recipes.recipe_id
-WHERE 
-    Recipes.recipe_id IN (SELECT recipe_id FROM UserRatesRecipe)
+    UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
 GROUP BY 
-    Users.user_name, Recipes.recipe_name, UserRatesRecipe.rating
-HAVING 
-    COUNT(DISTINCT Recipes.recipe_id) > 1;
+    Ingredients.ingredient_name
+ORDER BY 
+    popularity DESC
+LIMIT 15;
+
 
 
 --Compare Average Ratings of Recipes Containing 'Chicken' vs. 'Beef'
