@@ -30,7 +30,7 @@ CREATE TABLE Recipes (
 );
 
 CREATE TABLE Ingredients (
-    ingredient_id   INT NOT NULL AUTO_INCREMENT,
+    ingredient_id   INT NOT NULL,
     ingredient_name VARCHAR(255) NOT NULL UNIQUE,
     ingredient_type VARCHAR(255),
 
