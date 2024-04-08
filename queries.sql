@@ -36,11 +36,15 @@ JOIN
     Recipes ON RecipeIncludesIngredients.recipe_id = Recipes.recipe_id
 JOIN 
     UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
+WHERE 
+    UserLikeRecipe.user_id > 2
+    AND Recipes.recipe_name NOT LIKE '%shit%'
 GROUP BY 
     Ingredients.ingredient_name
 ORDER BY 
     popularity DESC
 LIMIT 15;
+
 
 
 
