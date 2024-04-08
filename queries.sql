@@ -15,7 +15,7 @@ LIMIT 5;
 
 
 -- Find Users Who Like and Rate the Same Recipe
---JOIN, SET(IN)
+--JOIN, AGGREGATION
 SELECT 
     Ingredients.ingredient_name,
     COUNT(*) AS popularity
