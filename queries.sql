@@ -48,23 +48,40 @@ LIMIT 15;
 
 
 
---Compare Average Ratings of Recipes Containing 'Chicken' vs. 'Beef'
+--Average Rating for Ingredients in Popular Recipes, where nutrition has calories < 200 and fat < 20
 --JOIN SET AGGREGATION
 SELECT 
-    'Chicken' AS ingredient_type, 
-    AVG(rating) AS avg_rating
+    Ingredients.ingredient_name,
+    AVG(UserRatesRecipe.rating) AS average_rating
 FROM 
-    UserRatesRecipe
+    Ingredients
+JOIN 
+    RecipeIncludesIngredients ON Ingredients.ingredient_id = RecipeIncludesIngredients.ingredient_id
+JOIN 
+    Recipes ON RecipeIncludesIngredients.recipe_id = Recipes.recipe_id
+JOIN 
+    UserRatesRecipe ON Recipes.recipe_id = UserRatesRecipe.recipe_id
+JOIN 
+    Nutrition ON Recipes.recipe_id = Nutrition.recipe_id
 WHERE 
-    recipe_id IN (SELECT recipe_id FROM RecipeIncludesIngredients WHERE ingredient_id IN (SELECT ingredient_id FROM Ingredients WHERE ingredient_name LIKE '%chicken%'))
-UNION
-SELECT 
-    'Beef' AS ingredient_type, 
-    AVG(rating)
-FROM 
-    UserRatesRecipe
-WHERE 
-    recipe_id IN (SELECT recipe_id FROM RecipeIncludesIngredients WHERE ingredient_id IN (SELECT ingredient_id FROM Ingredients WHERE ingredient_name LIKE '%beef%'));
+    Recipes.recipe_id IN (
+        SELECT 
+            RecipeIncludesIngredients.recipe_id
+        FROM 
+            RecipeIncludesIngredients
+        JOIN 
+            UserLikeRecipe ON RecipeIncludesIngredients.recipe_id = UserLikeRecipe.recipe_id
+        GROUP BY 
+            RecipeIncludesIngredients.recipe_id
+        HAVING 
+            COUNT(UserLikeRecipe.user_id) > 10
+    )
+    AND Nutrition.calorie < 200
+    AND Nutrition.fat < 20
+GROUP BY 
+    Ingredients.ingredient_name
+ORDER BY 
+    average_rating DESC;
 
 
 -- Identify Ingredients in High-rated Recipes and Available in Downtown Markets
