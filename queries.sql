@@ -1,17 +1,26 @@
---Find the Top 5 Most Liked Recipes
+--Common Ingredients in Recipes Rated 2 or Higher with "Good" Comments
 --JOIN and AGGREGATION
 SELECT 
-    Recipes.recipe_name,
-    COUNT(UserLikeRecipe.recipe_id) AS like_count
+    Ingredients.ingredient_name,
+    COUNT(Ingredients.ingredient_name) AS ingredient_count
 FROM 
-    Recipes
+    Ingredients
 JOIN 
-    UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
+    RecipeIncludesIngredients ON Ingredients.ingredient_id = RecipeIncludesIngredients.ingredient_id
+JOIN 
+    Recipes ON RecipeIncludesIngredients.recipe_id = Recipes.recipe_id
+JOIN 
+    UserRatesRecipe ON Recipes.recipe_id = UserRatesRecipe.recipe_id
+WHERE 
+    UserRatesRecipe.rating >= 2
+    AND UserRatesRecipe.comment LIKE '%good%'
 GROUP BY 
-    Recipes.recipe_name
+    Ingredients.ingredient_name
+HAVING 
+    COUNT(DISTINCT Recipes.recipe_id) > 1 -- Ensures the ingredient is common across multiple recipes
 ORDER BY 
-    like_count DESC
-LIMIT 5;
+    ingredient_count DESC;
+
 
 
 -- Find Users Who Like and Rate the Same Recipe
