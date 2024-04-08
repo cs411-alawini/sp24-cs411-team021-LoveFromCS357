@@ -97,10 +97,12 @@ JOIN (
         RecipeIncludesIngredients
     JOIN 
         UserRatesRecipe ON RecipeIncludesIngredients.recipe_id = UserRatesRecipe.recipe_id
+    WHERE 
+        UserRatesRecipe.comment NOT LIKE '%bad%'
     GROUP BY 
         RecipeIncludesIngredients.ingredient_id
     HAVING 
-        AVG(UserRatesRecipe.rating) >= 4
+        AVG(UserRatesRecipe.rating) > 1
 ) AS HighRatedIngredients ON Ingredients.ingredient_id = HighRatedIngredients.ingredient_id
 JOIN (
     SELECT 
