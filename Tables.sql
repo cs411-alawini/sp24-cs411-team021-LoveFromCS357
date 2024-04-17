@@ -22,7 +22,7 @@ CREATE TABLE Recipes (
     recipe_id       INT NOT NULL,
     recipe_name     VARCHAR(255) NOT NULL,
     recipe_type     VARCHAR(255),
-    user_email      VARCHAR(255) NOT NULL UNIQUE,
+    user_email      VARCHAR(255) NOT NULL,
 
     PRIMARY KEY (recipe_id),
     FOREIGN KEY (user_email) REFERENCES Users(user_email) ON DELETE CASCADE ON UPDATE CASCADE
