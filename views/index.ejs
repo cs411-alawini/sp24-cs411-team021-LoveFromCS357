@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Solution to What to Eat</title>
+    <style>
+        body {
+            background-color: rgb(0, 229, 255);
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: red;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        form {
+            text-align: center;
+            margin-top: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            width: 50%;
+            margin: auto;
+        }
+        li {
+            border-bottom: 1px solid white;
+            padding: 8px;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"], button {
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            width: 95%;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 100px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+        }
+        .close {
+            color: #aaa;
+            float:right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover, .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-label {
+            color: black;
+        }
+        .alert {
+            color: red;
+            text-align: center;
+        }
+        .recipe-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px; /* Adjust space between items */
+        }
+
+        .recipe-item button {
+        padding: 5px 10px; /* Smaller padding for a smaller button */
+        font-size: 0.8em; /* Smaller font size for text within the button */
+        margin-left: 10px; /* Space between buttons and text */
+        }
+        .window-title{
+            color: #007BFF; /* This is a shade of blue. */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ULTIMATE SOLUTION TO WHAT TO EAT</h1>
+        <% if (loggedin) { %>
+            <div>
+                Welcome Back, <%= username %>!
+                <button onclick="window.location.href='/logout'">Logout</button>
+                <button onclick="window.location.href='/my-likes'">Show my likes</button>
+            </div>
+        <% } else { %>
+            <button class="login-btn">Login</button>
+            <span style="width: 20px; display: inline-block;"></span> <!-- Space between buttons -->
+            <button class="register-btn">Register</button>
+        <% } %>
+    </div>
+    
+    
+    
+    
+    <h2>Search by Recipe Name</h2>
+    <form action="/search-by-recipe" method="POST">
+        <input type="text" name="keyword" placeholder="Enter recipe names separated by commas" required>
+        <button type="submit">Search</button>
+    </form>
+
+    <h2>Search by Ingredient</h2>
+    <form action="/search-by-ingredient" method="POST">
+        <input type="text" name="ingredient" placeholder="Enter ingredients separated by commas" required>
+        <button type="submit">Search</button>
+    </form>
+
+    <% if (recipes && recipes.length > 0) { %>
+        <ul>
+            <% recipes.forEach(function(recipe) { %>
+                <li class="recipe-item">
+                    <span><%= recipe.recipe_name %></span>
+                    <% if (loggedin) { %>
+                        <span>
+                            <% if (fromLike) { %>
+                            <!-- Dislike Button for each recipe -->
+                            <form action="/like-recipe" method="post" style="display: inline;">
+                                <input type="hidden" name="recipeId" value="<%= recipe.recipe_id %>">
+                                <button type="submit">Remove Like</button>
+                            </form>
+                            
+                            <!-- Rate Button for each recipe -->
+                            <button onclick="openRateModal('<%= recipe.recipe_id %>')">Rate</button>
+                            <% } else { %>
+                            <!-- Like Button for each recipe -->
+                            <form action="/like-recipe" method="post" style="display: inline;">
+                                <input type="hidden" name="recipeId" value="<%= recipe.recipe_id %>">
+                                <button type="submit">Like</button>
+                            </form>
+                            
+                            <!-- Rate Button for each recipe -->
+                            <button onclick="openRateModal('<%= recipe.recipe_id %>')">Rate</button>
+                            <% } %>
+                        </span>
+                    <% } %>
+                </li>
+            <% }); %>
+        </ul>
+    <% } else if (recipes) { %>
+        <p style="text-align: center;">No recipes found. Try different keywords or ingredients.</p>
+    <% } %>
+
+    <% if (message) { %>
+        <div style="color: white; background-color: black; padding: 10px; margin: 10px; text-align: center;">
+            <%= message %>
+        </div>
+    <% } %>
+
+    <!-- Only add this script if logged in successfully -->
+    <% if (loggedin && message === 'Login successful!') { %>
+    <script>
+        window.onload = function() {
+            // Reload page after 1 second; adjust time as necessary
+            setTimeout(function() {
+                window.location.href = '/';
+            }, 1000); // Reload the page after 1 second
+        }
+    </script>
+    <% } %>
+
+    <!-- Login Modal HTML -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 class="window-title">Login</h2>
+            <form action="/login" method="post">
+                <div>
+                    <label for="useremail" class="modal-label">Email:</label>
+                    <input type="text" id="useremail" name="useremail" required>
+                </div>
+                <div>
+                    <label for="password" class="modal-label">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div>
+                    <button type="submit">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Registration Modal HTML -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close close-register">&times;</span>
+            <h2 class="window-title">Register</h2>
+            <form action="/register" method="post">
+                <div>
+                    <label for="regUserEmail" class="modal-label">Email:</label>
+                    <input type="text" id="regUserEmail" name="useremail" required>
+                </div>
+                <div>
+                    <label for="regUserName" class="modal-label">Username:</label>
+                    <input type="text" id="reUserName" name="username" required>
+                </div>
+                <div>
+                    <label for="regPassword" class="modal-label">Password:</label>
+                    <input type="password" id="regPassword" name="password" required>
+                </div>
+                <div>
+                    <button type="submit">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rating Modal HTML -->
+    <div id="rateModal" class="modal">
+        <div class="modal-content">
+            <span class="close close-rate">&times;</span>
+            <h2 class="window-title">Rate Recipe</h2>
+            <form id="rateForm" action="#" method="post">
+                <input type="hidden" id="rateRecipeId" name="recipeId" value="">
+                <div>
+                    <label for="rating" class="modal-label">Your Rating:</label>
+                    <select id="rating" name="rating" required>
+                        <option value="1">1 Star</option>
+                        <option value="2">2 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="5">5 Stars</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="comment" class="modal-label">Comment:</label>
+                    <textarea id="comment" name="comment" required maxlength="255" placeholder="Write a comment..."></textarea>
+                </div>
+                <div>
+                    <button type="submit">Submit Rating</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get the modals
+        var loginModal = document.getElementById('loginModal');
+        var registerModal = document.getElementById('registerModal');
+        var rateModal = document.getElementById('rateModal');
+    
+        // Get the buttons that open the modals
+        var loginBtn = document.querySelector('.login-btn');
+        var registerBtn = document.querySelector('.register-btn');
+    
+        // Get the <span> elements that close the modals
+        var closeLogin = document.getElementsByClassName("close")[0]; // Assumes the first close class is in the login modal
+        var closeRegister = document.getElementsByClassName("close")[1]; // Assumes the second close class is in the register modal
+        var closeRate = document.querySelector(".close-rate");
+    
+        // Event handler for opening modals
+        loginBtn.onclick = function() {
+            loginModal.style.display = "block";
+        };
+        registerBtn.onclick = function() {
+            registerModal.style.display = "block";
+        };
+    
+        // Event handler for closing modals via close buttons
+        closeLogin.onclick = function() {
+            loginModal.style.display = "none";
+        };
+        closeRegister.onclick = function() {
+            registerModal.style.display = "none";
+        };
+        closeRate.onclick = function() {
+            rateModal.style.display = "none";
+        };
+    
+        // Event handler for closing modals by clicking outside of them
+        window.onclick = function(event) {
+            if (event.target == loginModal) {
+                loginModal.style.display = "none";
+            } else if (event.target == registerModal) {
+                registerModal.style.display = "none";
+            } else if (event.target == rateModal) {
+                rateModal.style.display = "none";
+            }
+        };
+    
+        // Function to open the rate modal and set up the form action
+        function openRateModal(recipeId) {
+            document.getElementById('rateRecipeId').value = recipeId; // Set hidden input with recipe ID
+            document.getElementById('rateForm').action = '/rate-recipe/' + recipeId; // Set form action
+            rateModal.style.display = 'block'; // Show the modal
+        }
+    </script>    
+    
+</body>
+</html>
