@@ -6,7 +6,7 @@
     <title>Ultimate Solution to What to Eat</title>
     <style>
         body {
-            background-color: rgb(0, 229, 255);
+            background-color: red;
             color: white;
             font-family: Arial, sans-serif;
         }
@@ -114,7 +114,7 @@
         <h1>ULTIMATE SOLUTION TO WHAT TO EAT</h1>
         <% if (loggedin) { %>
             <div>
-                Welcome Back, <%= username %>!
+                Welcome Back, <%= username %> (id:<%= userId %>)!
                 <button onclick="window.location.href='/logout'">Logout</button>
                 <button onclick="window.location.href='/my-likes'">Show my likes</button>
             </div>
@@ -122,6 +122,7 @@
             <button class="login-btn">Login</button>
             <span style="width: 20px; display: inline-block;"></span> <!-- Space between buttons -->
             <button class="register-btn">Register</button>
+            <button class="change-btn">Register / Update Info</button>
         <% } %>
     </div>
     
@@ -149,7 +150,7 @@
                         <span>
                             <% if (fromLike) { %>
                             <!-- Dislike Button for each recipe -->
-                            <form action="/like-recipe" method="post" style="display: inline;">
+                            <form action="/dislike-recipe" method="post" style="display: inline;">
                                 <input type="hidden" name="recipeId" value="<%= recipe.recipe_id %>">
                                 <button type="submit">Remove Like</button>
                             </form>
@@ -181,18 +182,6 @@
         </div>
     <% } %>
 
-    <!-- Only add this script if logged in successfully -->
-    <% if (loggedin && message === 'Login successful!') { %>
-    <script>
-        window.onload = function() {
-            // Reload page after 1 second; adjust time as necessary
-            setTimeout(function() {
-                window.location.href = '/';
-            }, 1000); // Reload the page after 1 second
-        }
-    </script>
-    <% } %>
-
     <!-- Login Modal HTML -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -217,7 +206,7 @@
     <!-- Registration Modal HTML -->
     <div id="registerModal" class="modal">
         <div class="modal-content">
-            <span class="close close-register">&times;</span>
+            <span class="close">&times;</span>
             <h2 class="window-title">Register</h2>
             <form action="/register" method="post">
                 <div>
@@ -239,10 +228,35 @@
         </div>
     </div>
 
+    <!-- Change Modal HTML -->
+    <div id="changeModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 class="window-title">Change settings</h2>
+            <form action="/changeUserSetting" method="post">
+                <div>
+                    <label for="regUserEmail" class="modal-label">Email:</label>
+                    <input type="text" id="regUserEmail" name="useremail" required>
+                </div>
+                <div>
+                    <label for="newgUserName" class="modal-label">Username:</label>
+                    <input type="text" id="newUserName" name="username" required>
+                </div>
+                <div>
+                    <label for="newPassword" class="modal-label">Password:</label>
+                    <input type="password" id="newPassword" name="password" required>
+                </div>
+                <div>
+                    <button type="submit">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Rating Modal HTML -->
     <div id="rateModal" class="modal">
         <div class="modal-content">
-            <span class="close close-rate">&times;</span>
+            <span class="close">&times;</span>
             <h2 class="window-title">Rate Recipe</h2>
             <form id="rateForm" action="#" method="post">
                 <input type="hidden" id="rateRecipeId" name="recipeId" value="">
@@ -268,57 +282,63 @@
     </div>
 
     <script>
-        // Get the modals
-        var loginModal = document.getElementById('loginModal');
-        var registerModal = document.getElementById('registerModal');
-        var rateModal = document.getElementById('rateModal');
-    
-        // Get the buttons that open the modals
-        var loginBtn = document.querySelector('.login-btn');
-        var registerBtn = document.querySelector('.register-btn');
-    
-        // Get the <span> elements that close the modals
-        var closeLogin = document.getElementsByClassName("close")[0]; // Assumes the first close class is in the login modal
-        var closeRegister = document.getElementsByClassName("close")[1]; // Assumes the second close class is in the register modal
-        var closeRate = document.querySelector(".close-rate");
-    
-        // Event handler for opening modals
-        loginBtn.onclick = function() {
-            loginModal.style.display = "block";
-        };
-        registerBtn.onclick = function() {
-            registerModal.style.display = "block";
-        };
-    
-        // Event handler for closing modals via close buttons
-        closeLogin.onclick = function() {
-            loginModal.style.display = "none";
-        };
-        closeRegister.onclick = function() {
-            registerModal.style.display = "none";
-        };
-        closeRate.onclick = function() {
-            rateModal.style.display = "none";
-        };
-    
-        // Event handler for closing modals by clicking outside of them
-        window.onclick = function(event) {
-            if (event.target == loginModal) {
-                loginModal.style.display = "none";
-            } else if (event.target == registerModal) {
-                registerModal.style.display = "none";
-            } else if (event.target == rateModal) {
-                rateModal.style.display = "none";
-            }
-        };
-    
-        // Function to open the rate modal and set up the form action
-        function openRateModal(recipeId) {
-            document.getElementById('rateRecipeId').value = recipeId; // Set hidden input with recipe ID
-            document.getElementById('rateForm').action = '/rate-recipe/' + recipeId; // Set form action
-            rateModal.style.display = 'block'; // Show the modal
+    // Get the modals
+    var loginModal = document.getElementById('loginModal');
+    var registerModal = document.getElementById('registerModal');
+    var rateModal = document.getElementById('rateModal');
+    var changeModal = document.getElementById('changeModal');
+
+    // Get the buttons that open the modals
+    var loginBtn = document.querySelector('.login-btn');
+    var registerBtn = document.querySelector('.register-btn');
+    var changeBtn = document.querySelector('.change-btn')
+
+    // Get the <span> elements that close the modals
+    var closeButtons = document.querySelectorAll('.close');
+
+    // Function to hide all modals
+    function closeModal() {
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.style.display = 'none';
+        });
+    }
+
+    // Event handler for opening specific modals
+    loginBtn.onclick = function() {
+        loginModal.style.display = "block";
+    };
+
+    registerBtn.onclick = function() {
+        registerModal.style.display = "block";
+    };
+
+    changeBtn.onclick = function() {
+        changeModal.style.display = "block";
+    }
+
+    // Attach close event to all close buttons
+    closeButtons.forEach(function(btn) {
+        btn.onclick = function() {
+            closeModal(); // Close the modal when the close button is clicked
         }
-    </script>    
+    });
+
+    // Event handler for closing modals by clicking outside of them
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            closeModal(); // Close the modal if the target is a modal background
+        }
+    };
+
+    // Function to open the rate modal and set up the form action
+    function openRateModal(recipeId) {
+        document.getElementById('rateRecipeId').value = recipeId;
+        rateModal.style.display = 'block';
+    }
+</script>
+
+        
     
 </body>
 </html>
