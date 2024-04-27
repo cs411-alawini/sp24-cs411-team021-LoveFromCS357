@@ -73,11 +73,9 @@ app.get('/my-likes', function(req, res) {
             return;
         }
         // Pass an additional variable to indicate no buttons should be displayed
-        res.render('index', { recipes: results, message: "", displayButtons: false });
+        res.render('index', { recipes: results, message: "", fromLike: true });
     });
 });
-
-
 
 app.post('/search-by-recipe', (req, res) => {
     const keywords = req.body.keyword.split(',').map(k => k.trim());
@@ -95,9 +93,10 @@ app.post('/search-by-recipe', (req, res) => {
             res.status(500).send('Database error occurred.');
             return;
         }
-        res.render('index', { recipes: results, message: '', displayButtons: true }); // Include message as an empty string
+        res.render('index', { recipes: results, message: '' ,fromLike: false}); // Include message as an empty string
     });
 });
+
 
 app.post('/search-by-ingredient', (req, res) => {
     const ingredients = req.body.ingredient.split(',').map(ingredient => ingredient.trim());
@@ -120,9 +119,11 @@ app.post('/search-by-ingredient', (req, res) => {
             res.status(500).send('Database error occurred.');
             return;
         }
-        res.render('index', { recipes: results, message: '', displayButtons: true });
+        res.render('index', { recipes: results, message: '',fromLike: false});
     });
 });
+
+
 
 app.post('/login', (req, res) => {
     const { useremail, password } = req.body;
@@ -138,13 +139,13 @@ app.post('/login', (req, res) => {
             req.session.loggedin = true;
             req.session.userId = results[0].user_id;  // Storing user_id in the session
             req.session.username = results[0].user_name; // Storing username in the session
-            res.render('index', { recipes: null, message: 'Login successful!', loggedin: true });
+            // res.render('index', { recipes: null, message: 'Login successful!', loggedin: true });
+            res.redirect('/'); // Redirect to the homepage or a dashboard after successful login
         } else {
             res.render('index', { recipes: null, message: 'Incorrect Username and/or Password!', loggedin: false });
         }
     });
 });
-
 
 app.post('/register', (req, res) => {
     const { useremail, username, password } = req.body;
@@ -185,6 +186,9 @@ app.post('/register', (req, res) => {
     });
 });
 
+
+
+
 app.post('/like-recipe', function(req, res) {
     if (req.session.loggedin && req.session.userId) {
         const userId = req.session.userId; // Use the userId from the session
@@ -223,7 +227,59 @@ app.post('/like-recipe', function(req, res) {
 
 
 
+app.post('/dislike-recipe', function(req, res) {
+    if (req.session.loggedin && req.session.userId) {
+        const userId = req.session.userId; // Use the userId from the session
+        const recipeId = req.body.recipeId;
 
+        const sql = "DELETE FROM UserLikeRecipe WHERE user_id = ? AND recipe_id = ?";
+        connection.query(sql, [userId, recipeId], function(err, result) {
+            if (err) {
+                console.error("Error deleting like from UserLikeRecipe:", err);
+                res.render('index', { recipes: null, message: "Error processing your dislike" });
+            } else {
+                console.log("Successfully removed like from database");
+                res.render('index', { recipes: null, message: "Remove liked recipe successfully!" });
+            }
+        });
+    } else {
+        res.render('index', { recipes: null, message: "Please log in to remove liked recipes" });
+    }
+});
+
+
+
+app.post('/changeUserSetting', function(req, res) {
+    const { useremail, username, password } = req.body;
+
+    // Check if the email exists in the database
+    connection.query('SELECT user_id FROM Users WHERE user_email = ?', [useremail], function(error, results) {
+        if (error) {
+            console.error('Database error:', error);
+            res.render('index', { recipes: null, message: 'Database error while checking email.' });
+            return;
+        }
+
+        if (results.length > 0) {
+            // If the email exists, update the username and password
+            const userId = results[0].user_id;  // Extract user_id
+            const updateSql = 'UPDATE Users SET user_name = ?, password = ? WHERE user_id = ?';
+
+            connection.query(updateSql, [username, password, userId], function(updateError) {
+                if (updateError) {
+                    console.error('Database error when updating user:', updateError);
+                    res.render('index', { recipes: null, message: 'Failed to update user information.' });
+                    return;
+                }
+                // Successfully updated the user
+                res.render('index', { recipes: null, message: 'User information updated successfully.' });
+            });
+        } else {
+            // Email does not exist in the database
+            res.render('index', { recipes: null, message: 'Email does not exist. Please use a valid email.' });
+        }
+    });
+});
 
 
 // Logout route
@@ -241,4 +297,3 @@ var port = process.env.PORT || 80;
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
-
