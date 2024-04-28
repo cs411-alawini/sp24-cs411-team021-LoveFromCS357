@@ -55,13 +55,15 @@ CREATE TABLE Markets (
 );
 
 CREATE TABLE UserLikeRecipe (
-    user_id         INT NOT NULL,
-    recipe_id       INT NOT NULL,
-
-    PRIMARY KEY (user_id, recipe_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (recipe_id) REFERENCES Recipes(recipe_id) ON DELETE CASCADE ON UPDATE CASCADE
+  user_id INT NOT NULL,
+  recipe_id INT NOT NULL,
+  PRIMARY KEY (user_id, recipe_id),
+  UNIQUE KEY UC_User_Recipe (user_id, recipe_id),
+  KEY recipe_id (recipe_id),
+  CONSTRAINT FK_UserLikeRecipe_UserID FOREIGN KEY (user_id) REFERENCES Users (user_id) ON DELETE CASCADE,
+  CONSTRAINT FK_UserLikeRecipe_RecipeID FOREIGN KEY (recipe_id) REFERENCES Recipes (recipe_id) ON DELETE CASCADE
 );
+
 
 CREATE TABLE UserRatesRecipe (
     user_id         INT NOT NULL,
@@ -91,3 +93,30 @@ CREATE TABLE MarketsSellsIngredients (
     FOREIGN KEY (market_id) REFERENCES Markets(market_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (ingredient_id) REFERENCES Ingredients(ingredient_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE TABLE RecipeLikeLog (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    recipe_id INT NOT NULL,
+    liked_on DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (recipe_id) REFERENCES Recipes(recipe_id) ON DELETE CASCADE
+);
+
+
+CREATE TRIGGER AfterLikeInsert
+AFTER INSERT ON UserLikeRecipe
+FOR EACH ROW
+BEGIN
+    INSERT INTO RecipeLikeLog(user_id, recipe_id)
+    VALUES (NEW.user_id, NEW.recipe_id);
+END;
+
+
+CREATE PROCEDURE GetUserLikedRecipes(user_id_param INT)
+BEGIN
+    SELECT Recipes.recipe_id, Recipes.recipe_name
+    FROM Recipes
+    INNER JOIN UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
+    WHERE UserLikeRecipe.user_id = user_id_param;
+END;

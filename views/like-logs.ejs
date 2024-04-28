@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Like Logs</title>
+</head>
+<body>
+    <h1>Like Logs</h1>
+    <% if (logs && logs.length > 0) { %>
+        <ul>
+            <% logs.forEach(function(log) { %>
+                <li><%= log.user_name %> liked <%= log.recipe_name %> on <%= log.liked_on %></li>
+            <% }); %>
+        </ul>
+    <% } else { %>
+        <p><%= message %></p>
+    <% } %>
+</body>
+</html>

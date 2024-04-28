@@ -55,27 +55,22 @@ app.get('/', (req, res) => {
 
 app.get('/my-likes', function(req, res) {
     if (!req.session.loggedin || !req.session.userId) {
-        res.redirect('/login'); // Redirect to login if not logged in
+        res.redirect('/login');
         return;
     }
 
     const userId = req.session.userId;
-    const sql = `
-        SELECT Recipes.recipe_id, Recipes.recipe_name
-        FROM Recipes
-        JOIN UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
-        WHERE UserLikeRecipe.user_id = ?`;
-
-    connection.query(sql, [userId], function(err, results) {
+    connection.query('CALL GetUserLikedRecipes(?)', [userId], function(err, results) {
         if (err) {
             console.error("Error fetching liked recipes:", err);
             res.render('index', { recipes: null, message: "Error fetching your liked recipes" });
             return;
         }
-        // Pass an additional variable to indicate no buttons should be displayed
-        res.render('index', { recipes: results, message: "", fromLike: true });
+        // Note: Depending on your MySQL configuration, you may need to access your results with `results[0]`
+        res.render('index', { recipes: results[0], message: "", fromLike: true });
     });
 });
+
 
 app.post('/search-by-recipe', (req, res) => {
     const keywords = req.body.keyword.split(',').map(k => k.trim());
@@ -247,6 +242,22 @@ app.post('/dislike-recipe', function(req, res) {
     }
 });
 
+app.get('/like-logs', function(req, res) {
+    if (!req.session.loggedin) {
+        res.redirect('/login');
+        return;
+    }
+
+    // Query to fetch the logs
+    connection.query("SELECT RecipeLikeLog.*, Users.user_name, Recipes.recipe_name FROM RecipeLikeLog JOIN Users ON Users.user_id = RecipeLikeLog.user_id JOIN Recipes ON Recipes.recipe_id = RecipeLikeLog.recipe_id ORDER BY liked_on DESC", function(err, results) {
+        if (err) {
+            console.error("Error fetching like logs:", err);
+            res.render('like-logs', { logs: null, message: "Error retrieving like logs." });
+        } else {
+            res.render('like-logs', { logs: results, message: '' });
+        }
+    });
+});
 
 
 app.post('/changeUserSetting', function(req, res) {
