@@ -103,6 +103,18 @@ CREATE TABLE RecipeLikeLog (
     FOREIGN KEY (recipe_id) REFERENCES Recipes(recipe_id) ON DELETE CASCADE
 );
 
+CREATE TABLE RecipeRateLog (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    recipe_id INT NOT NULL,
+    rating INT NOT NULL,
+    comment VARCHAR(255),
+    rated_on DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (recipe_id) REFERENCES Recipes(recipe_id) ON DELETE CASCADE
+);
+
+
 
 CREATE TRIGGER AfterLikeInsert
 AFTER INSERT ON UserLikeRecipe

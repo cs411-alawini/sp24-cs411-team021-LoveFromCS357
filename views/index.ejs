@@ -254,32 +254,33 @@
     </div>
 
     <!-- Rating Modal HTML -->
-    <div id="rateModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 class="window-title">Rate Recipe</h2>
-            <form id="rateForm" action="#" method="post">
-                <input type="hidden" id="rateRecipeId" name="recipeId" value="">
-                <div>
-                    <label for="rating" class="modal-label">Your Rating:</label>
-                    <select id="rating" name="rating" required>
-                        <option value="1">1 Star</option>
-                        <option value="2">2 Stars</option>
-                        <option value="3">3 Stars</option>
-                        <option value="4">4 Stars</option>
-                        <option value="5">5 Stars</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="comment" class="modal-label">Comment:</label>
-                    <textarea id="comment" name="comment" required maxlength="255" placeholder="Write a comment..."></textarea>
-                </div>
-                <div>
-                    <button type="submit">Submit Rating</button>
-                </div>
-            </form>
-        </div>
+<div id="rateModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="window-title">Rate Recipe</h2>
+        <form id="rateForm" action="/rate-recipe" method="post">
+            <input type="hidden" id="rateRecipeId" name="recipeId" value="">
+            <div>
+                <label for="rating" class="modal-label">Your Rating:</label>
+                <select id="rating" name="rating" required>
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                </select>
+            </div>
+            <div>
+                <label for="comment" class="modal-label">Comment:</label>
+                <textarea id="comment" name="comment" required maxlength="255" placeholder="Write a comment..."></textarea>
+            </div>
+            <div>
+                <button type="submit">Submit Rating</button>
+            </div>
+        </form>
     </div>
+</div>
+
 
     <script>
     // Get the modals

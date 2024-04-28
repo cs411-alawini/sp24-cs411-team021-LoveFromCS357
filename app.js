@@ -181,6 +181,57 @@ app.post('/register', (req, res) => {
     });
 });
 
+//transaction code
+app.post('/rate-recipe', function(req, res) {
+    if (!req.session.loggedin || !req.session.userId) {
+        res.render('index', { recipes: null, message: "Please log in to rate recipes" });
+        return;
+    }
+
+    const userId = req.session.userId;
+    const { recipeId, rating, comment } = req.body;
+
+    connection.beginTransaction(function(err) {
+        if (err) { 
+            console.error("Transaction Error:", err);
+            res.render('index', { recipes: null, message: "Transaction error" });
+            return;
+        }
+
+        const insertRatingSql = "INSERT INTO UserRatesRecipe (user_id, recipe_id, rating, comment) VALUES (?, ?, ?, ?)";
+        connection.query(insertRatingSql, [userId, recipeId, rating, comment], function(insertErr, insertResults) {
+            if (insertErr) {
+                return connection.rollback(function() {
+                    console.error("Error inserting rating:", insertErr);
+                    res.render('index', { recipes: null, message: "Error processing your rating" });
+                });
+            }
+
+            const logSql = "INSERT INTO RecipeRateLog (user_id, recipe_id, rating, comment) VALUES (?, ?, ?, ?)";
+            connection.query(logSql, [userId, recipeId, rating, comment], function(logErr, logResults) {
+                if (logErr) {
+                    return connection.rollback(function() {
+                        console.error("Error logging rating action:", logErr);
+                        res.render('index', { recipes: null, message: "Error logging your rating" });
+                    });
+                }
+
+                connection.commit(function(commitErr) {
+                    if (commitErr) {
+                        return connection.rollback(function() {
+                            console.error("Error committing transaction:", commitErr);
+                            res.render('index', { recipes: null, message: "Transaction failed" });
+                        });
+                    }
+                    console.log("Transaction completed successfully.");
+                    res.render('index', { recipes: null, message: "Recipe rated successfully!" });
+                });
+            });
+        });
+    });
+});
+
+
 
 
 
@@ -248,16 +299,43 @@ app.get('/like-logs', function(req, res) {
         return;
     }
 
-    // Query to fetch the logs
-    connection.query("SELECT RecipeLikeLog.*, Users.user_name, Recipes.recipe_name FROM RecipeLikeLog JOIN Users ON Users.user_id = RecipeLikeLog.user_id JOIN Recipes ON Recipes.recipe_id = RecipeLikeLog.recipe_id ORDER BY liked_on DESC", function(err, results) {
+    // Queries to fetch the like and rate logs separately
+    const likeQuery = `
+        SELECT RecipeLikeLog.log_id, Users.user_name, Recipes.recipe_name, RecipeLikeLog.liked_on
+        FROM RecipeLikeLog
+        JOIN Users ON Users.user_id = RecipeLikeLog.user_id
+        JOIN Recipes ON Recipes.recipe_id = RecipeLikeLog.recipe_id
+        ORDER BY RecipeLikeLog.liked_on DESC`;
+
+    const rateQuery = `
+        SELECT RecipeRateLog.log_id, Users.user_name, Recipes.recipe_name, RecipeRateLog.rating, RecipeRateLog.comment, RecipeRateLog.rated_on
+        FROM RecipeRateLog
+        JOIN Users ON Users.user_id = RecipeRateLog.user_id
+        JOIN Recipes ON Recipes.recipe_id = RecipeRateLog.recipe_id
+        ORDER BY RecipeRateLog.rated_on DESC`;
+
+    // Execute the like query
+    connection.query(likeQuery, function(err, likeResults) {
         if (err) {
             console.error("Error fetching like logs:", err);
-            res.render('like-logs', { logs: null, message: "Error retrieving like logs." });
-        } else {
-            res.render('like-logs', { logs: results, message: '' });
+            res.render('like-logs', { likeLogs: null, rateLogs: null, message: "Error retrieving like logs." });
+            return;
         }
+
+        // Execute the rate query inside the callback of the like query
+        connection.query(rateQuery, function(err, rateResults) {
+            if (err) {
+                console.error("Error fetching rate logs:", err);
+                res.render('like-logs', { likeLogs: likeResults, rateLogs: null, message: "Error retrieving rate logs." });
+                return;
+            }
+
+            // Render the page with both results
+            res.render('like-logs', { likeLogs: likeResults, rateLogs: rateResults, message: '' });
+        });
     });
 });
+
 
 
 app.post('/changeUserSetting', function(req, res) {

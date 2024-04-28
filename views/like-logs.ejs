@@ -2,18 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Like Logs</title>
+    <title>Activity Logs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+            width: 600px;
+            margin: 20px auto;
+            padding: 0;
+        }
+        li {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Like Logs</h1>
-    <% if (logs && logs.length > 0) { %>
+    <h1>Activity Logs</h1>
+    <h2>Like Logs</h2>
+    <% if (likeLogs && likeLogs.length > 0) { %>
         <ul>
-            <% logs.forEach(function(log) { %>
+            <% likeLogs.forEach(function(log) { %>
                 <li><%= log.user_name %> liked <%= log.recipe_name %> on <%= log.liked_on %></li>
             <% }); %>
         </ul>
     <% } else { %>
-        <p><%= message %></p>
+        <p>No like activity found.</p>
+    <% } %>
+
+    <h2>Rate Logs</h2>
+    <% if (rateLogs && rateLogs.length > 0) { %>
+        <ul>
+            <% rateLogs.forEach(function(log) { %>
+                <li><%= log.user_name %> rated <%= log.recipe_name %> <%= log.rating %> stars on <%= log.rated_on %>: "<%= log.comment %>"</li>
+            <% }); %>
+        </ul>
+    <% } else { %>
+        <p>No rate activity found.</p>
     <% } %>
 </body>
 </html>
