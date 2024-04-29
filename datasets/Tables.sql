@@ -125,10 +125,50 @@ BEGIN
 END;
 
 
-CREATE PROCEDURE GetUserLikedRecipes(user_id_param INT)
+DELIMITER $$
+
+CREATE PROCEDURE GetUserLikedRecipes(IN user_id_param INT)
 BEGIN
-    SELECT Recipes.recipe_id, Recipes.recipe_name
-    FROM Recipes
-    INNER JOIN UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
-    WHERE UserLikeRecipe.user_id = user_id_param;
-END;
+    DECLARE done INT DEFAULT 0;
+    DECLARE recipe_id INT;
+    DECLARE recipe_name VARCHAR(255);
+
+    -- Cursor to iterate through all liked recipes
+    DECLARE recipe_cursor CURSOR FOR
+        SELECT Recipes.recipe_id, Recipes.recipe_name
+        FROM Recipes
+        JOIN UserLikeRecipe ON Recipes.recipe_id = UserLikeRecipe.recipe_id
+        WHERE UserLikeRecipe.user_id = user_id_param;
+
+    -- Handler for cursor control
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    -- Temporary table to store results
+    CREATE TEMPORARY TABLE IF NOT EXISTS TempLikedRecipes (
+        recipe_id INT,
+        recipe_name VARCHAR(255)
+    );
+
+    -- Open the cursor and start fetching records
+    OPEN recipe_cursor;
+
+    get_next_recipe: LOOP
+        FETCH recipe_cursor INTO recipe_id, recipe_name;
+        IF done THEN
+            LEAVE get_next_recipe;
+        END IF;
+
+        -- Insert each fetched record into the temporary table
+        INSERT INTO TempLikedRecipes (recipe_id, recipe_name) VALUES (recipe_id, recipe_name);
+    END LOOP;
+
+    CLOSE recipe_cursor;
+
+    -- Return all rows from the temporary table
+    SELECT * FROM TempLikedRecipes;
+
+    -- Drop the temporary table after use
+    DROP TEMPORARY TABLE TempLikedRecipes;
+END$$
+
+DELIMITER ;

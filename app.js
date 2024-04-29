@@ -66,10 +66,14 @@ app.get('/my-likes', function(req, res) {
             res.render('index', { recipes: null, message: "Error fetching your liked recipes" });
             return;
         }
-        // Note: Depending on your MySQL configuration, you may need to access your results with `results[0]`
-        res.render('index', { recipes: results[0], message: "", fromLike: true });
+        
+        // results[0] gives you the first result set of multiple result sets from a stored procedure
+        const recipes = results[0];
+
+        res.render('index', { recipes, message: "", fromLike: true });
     });
 });
+
 
 
 app.post('/search-by-recipe', (req, res) => {
