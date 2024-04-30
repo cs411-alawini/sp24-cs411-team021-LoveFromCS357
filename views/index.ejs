@@ -145,7 +145,7 @@
         <ul>
             <% recipes.forEach(function(recipe) { %>
                 <li class="recipe-item">
-                    <span><%= recipe.recipe_name %></span>
+                    <span><%= recipe.recipe_name %></span> - rating: <span><%= recipe.average_rating %></span>
                     <% if (loggedin) { %>
                         <span>
                             <% if (fromLike) { %>
