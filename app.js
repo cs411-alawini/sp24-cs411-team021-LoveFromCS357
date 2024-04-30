@@ -78,12 +78,19 @@ app.get('/my-likes', function(req, res) {
 
 app.post('/search-by-recipe', (req, res) => {
     const keywords = req.body.keyword.split(',').map(k => k.trim());
-    let query = 'SELECT recipe_id, recipe_name FROM Recipes WHERE';
-    const conditions = keywords.map((keyword, index) => {
-        return ` recipe_name LIKE ?`;
+    let query = `
+    SELECT Recipes.recipe_id, Recipes.recipe_name, COALESCE(AVG(UserRatesRecipe.rating), 'No ratings yet') AS average_rating
+    FROM Recipes
+    LEFT JOIN UserRatesRecipe ON Recipes.recipe_id = UserRatesRecipe.recipe_id
+    WHERE `;
+
+    const conditions = keywords.map(keyword => {
+        return ` Recipes.recipe_name LIKE ?`;
     }).join(' OR ');
 
     query += conditions;
+    query += " GROUP BY Recipes.recipe_id, Recipes.recipe_name";
+
     const params = keywords.map(keyword => `%${keyword}%`);
 
     connection.query(query, params, (err, results) => {
@@ -92,24 +99,29 @@ app.post('/search-by-recipe', (req, res) => {
             res.status(500).send('Database error occurred.');
             return;
         }
-        res.render('index', { recipes: results, message: '' ,fromLike: false}); // Include message as an empty string
+        res.render('index', { recipes: results, message: '', fromLike: false});
     });
 });
+
 
 
 app.post('/search-by-ingredient', (req, res) => {
     const ingredients = req.body.ingredient.split(',').map(ingredient => ingredient.trim());
     let query = `
-        SELECT DISTINCT Recipes.recipe_id, Recipes.recipe_name 
-        FROM Recipes 
-        JOIN RecipeIncludesIngredients ON Recipes.recipe_id = RecipeIncludesIngredients.recipe_id
-        JOIN Ingredients ON RecipeIncludesIngredients.ingredient_id = Ingredients.ingredient_id
-        WHERE`;
+    SELECT DISTINCT Recipes.recipe_id, Recipes.recipe_name, COALESCE(AVG(UserRatesRecipe.rating), 'No ratings yet') AS average_rating
+    FROM Recipes
+    JOIN RecipeIncludesIngredients ON Recipes.recipe_id = RecipeIncludesIngredients.recipe_id
+    JOIN Ingredients ON RecipeIncludesIngredients.ingredient_id = Ingredients.ingredient_id
+    LEFT JOIN UserRatesRecipe ON Recipes.recipe_id = UserRatesRecipe.recipe_id
+    WHERE `;
+
     const conditions = ingredients.map(ingredient => {
         return ` Ingredients.ingredient_name LIKE ?`;
     }).join(' OR ');
 
     query += conditions;
+    query += " GROUP BY Recipes.recipe_id, Recipes.recipe_name";
+
     const params = ingredients.map(ingredient => `%${ingredient}%`);
 
     connection.query(query, params, (err, results) => {
@@ -118,9 +130,10 @@ app.post('/search-by-ingredient', (req, res) => {
             res.status(500).send('Database error occurred.');
             return;
         }
-        res.render('index', { recipes: results, message: '',fromLike: false});
+        res.render('index', { recipes: results, message: '', fromLike: false});
     });
 });
+
 
 
 
